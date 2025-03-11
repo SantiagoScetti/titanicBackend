@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class PassengerInput(BaseModel):
+    name: str
     Pclass: int
     Sex: str
     Age: int
@@ -14,5 +15,9 @@ class PassengerInput(BaseModel):
     Family_Size_Grouped: str
 
 class PredictionOutput(BaseModel):
-    PassengerId: int
-    Survived: int
+    id: int
+    name: str
+    survived: bool
+
+    class Config:
+        orm_mode = True
