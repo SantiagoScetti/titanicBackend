@@ -15,9 +15,10 @@ class PassengerInput(BaseModel):
     Family_Size_Grouped: str
 
 class PredictionOutput(BaseModel):
-    id: int
+    id: int | None = None
     name: str
     survived: bool
+    probability: float  # <-- nuevo campo
 
     class Config:
         from_attributes = True

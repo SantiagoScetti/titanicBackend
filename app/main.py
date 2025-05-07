@@ -29,36 +29,16 @@ def home():
     return {"message": "Bienvenido a la API de predicción de supervivencia del Titanic"}
 
 @app.post("/predict", response_model=PredictionOutput)
-def predict(passenger: PassengerInput, db: Session = Depends(get_db)):
+def predict(passenger: PassengerInput):
     # Convertir la entrada a DataFrame para la predicción
     input_data = pd.DataFrame([passenger.dict()])
     
-    # Realiza la predicción (se espera que predict_survival devuelva un 0 o 1)
-    prediction_result = predict_survival(input_data)[0]
-    
-    # Crear la entrada en la base de datos
-    prediction_entry = Prediction(
-        name=passenger.name,
-        Pclass=passenger.Pclass,
-        Sex=passenger.Sex,
-        Age=passenger.Age,
-        SibSp=passenger.SibSp,
-        Parch=passenger.Parch,
-        Fare=passenger.Fare,
-        Embarked=passenger.Embarked,
-        Cabin_Assigned=passenger.Cabin_Assigned,
-        Name_Size=passenger.Name_Size,
-        TicketNumberCounts=passenger.TicketNumberCounts,
-        Family_Size_Grouped=passenger.Family_Size_Grouped,
-        survived=bool(prediction_result)
-    )
-    
-    db.add(prediction_entry)
-    db.commit()
-    db.refresh(prediction_entry)
+    # Realiza la predicción y obtiene la probabilidad
+    prediction_result, probability = predict_survival(input_data)
     
     return PredictionOutput(
-        id=prediction_entry.id,
-        name=prediction_entry.name,
-        survived=prediction_entry.survived
+        id=None,
+        name=passenger.name,
+        survived=bool(prediction_result[0]),
+        probability=round(probability[0], 2)  # redondeado a 2 decimales
     )
