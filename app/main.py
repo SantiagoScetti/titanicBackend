@@ -13,11 +13,15 @@ def home():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(passenger: PassengerInput):
-    # Convertir la entrada a DataFrame para la predicción
-    input_data = pd.DataFrame([passenger.dict()])
+    # Convertir la entrada a un diccionario y luego a DataFrame para la predicción
+    # Usamos model_dump() en lugar de dict() que está obsoleto
+    input_data = passenger.model_dump()
+    
+    # Creamos el DataFrame correctamente
+    input_df = pd.DataFrame([input_data])
 
     # Realiza la predicción y obtiene la probabilidad
-    prediction_result, probability = predict_survival(input_data)
+    prediction_result, probability = predict_survival(input_df)
 
     return PredictionOutput(
         id=None,
