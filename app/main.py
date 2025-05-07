@@ -23,9 +23,10 @@ def predict(passenger: PassengerInput):
     # Realiza la predicción y obtiene la probabilidad
     prediction_result, probability = predict_survival(input_df)
 
+    # Ahora prediction_result y probability son escalares, no necesitamos indexarlos
     return PredictionOutput(
         id=None,
         name=passenger.name,
-        survived=bool(prediction_result[0]),
-        probability=round(probability[0], 2),  # redondeado a 2 decimales
+        survived=bool(prediction_result),  
+        probability=round(probability, 2),
     )
