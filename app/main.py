@@ -1,10 +1,26 @@
 # app/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from app.schemas import PassengerInput, PredictionOutput
 from app.model import predict_survival  # Función que usa tu modelo para predecir
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="Titanic Survival Prediction API")
+
+# CORS para permitir acceso desde el frontend
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
@@ -13,19 +29,13 @@ def home():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(passenger: PassengerInput):
-    # Convertir la entrada a un diccionario y luego a DataFrame para la predicción
-    # Usamos model_dump() en lugar de dict() que está obsoleto
+   
     input_data = passenger.model_dump()
-    
-    # Creamos el DataFrame correctamente
     input_df = pd.DataFrame([input_data])
 
-    # Realiza la predicción y obtiene la probabilidad
     prediction_result, probability = predict_survival(input_df)
 
-    # Ahora prediction_result y probability son escalares, no necesitamos indexarlos
     return PredictionOutput(
-        id=None,
         name=passenger.name,
         survived=bool(prediction_result),  
         probability=round(probability, 2),
