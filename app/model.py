@@ -1,123 +1,126 @@
 import joblib
-import numpy as np
-from pathlib import Path
 import pandas as pd
-import random  # Agregado
-from sklearn.pipeline import Pipeline  
-
-# Cargar el modelo
-MODEL_PATH = Path(__file__).parent.parent / "models" / "modelo_titanic_vc2.pkl"
-model = joblib.load(MODEL_PATH)
+from pathlib import Path
+from typing import Tuple
 
 
-def predict_survival(passenger_data):
-    print(f"Type of passenger_data: {type(passenger_data)}")
-    print(f"Shape of passenger_data: {passenger_data.shape}")
-    print(f"Columns: {passenger_data.columns}")
+class TitanicPredictor:
+    """Clase para manejar las predicciones del modelo Titanic"""
+
+    def __init__(self):
+        self.model = None
+        self.load_model()
+
+    def load_model(self):
+        """Carga el modelo desde el archivo pkl"""
+        try:
+            MODEL_PATH = (
+                Path(__file__).parent.parent / "models" / "modelo_titanic_rfc.pkl"
+            )
+            self.model = joblib.load(MODEL_PATH)
+            print("✅ Modelo cargado exitosamente")
+        except Exception as e:
+            print(f"❌ Error cargando el modelo: {e}")
+            raise
+
+    def preprocess_data(self, passenger_data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Preprocesa los datos del pasajero para el modelo
+
+        Args:
+            passenger_data: DataFrame con los datos del pasajero
+
+        Returns:
+            DataFrame preprocesado
+        """
+        # Crear una copia para no modificar el original
+        data = passenger_data.copy()
+
+        # Agregar Family_Size
+        data["Family_Size"] = data["SibSp"] + data["Parch"]
+
+        # Asegurar el orden correcto de columnas
+        expected_cols = [
+            "Pclass",
+            "Sex",
+            "Age",
+            "SibSp",
+            "Parch",
+            "Fare",
+            "Embarked",
+            "Family_Size_Grouped",
+            "Cabin_Assigned",
+            "Name_Size",
+            "TicketNumberCounts",
+            "Family_Size",
+        ]
+
+        # Verificar que todas las columnas estén presentes
+        missing_cols = [col for col in expected_cols if col not in data.columns]
+        if missing_cols:
+            raise ValueError(f"Faltan las siguientes columnas: {missing_cols}")
+
+        return data[expected_cols]
+
+    def get_confidence_level(self, max_probability: float) -> str:
+        """
+        Determina el nivel de confianza basado en la probabilidad máxima
+
+        Args:
+            max_probability: La probabilidad más alta entre sobrevivir y morir
+
+        Returns:
+            Nivel de confianza como string
+        """
+        if max_probability >= 0.9:
+            return "Muy Alta"
+        elif max_probability >= 0.8:
+            return "Alta"
+        elif max_probability >= 0.7:
+            return "Media"
+        elif max_probability >= 0.6:
+            return "Baja"
+        else:
+            return "Muy Baja"
+
+    def predict_survival(
+        self, passenger_data: pd.DataFrame
+    ) -> Tuple[int, float, float, str]:
+        """
+        Realiza la predicción de supervivencia
+
+        Args:
+            passenger_data: DataFrame con los datos del pasajero
+
+        Returns:
+            Tupla con (predicción, prob_morir, prob_sobrevivir, nivel_confianza)
+        """
+        if self.model is None:
+            raise ValueError("El modelo no está cargado")
+
+        # Preprocesar datos
+        processed_data = self.preprocess_data(passenger_data)
+
+        # Realizar predicción
+        prediction = self.model.predict(processed_data)[0]
+        probabilities = self.model.predict_proba(processed_data)[0]
+
+        prob_die = probabilities[0]  # Probabilidad de NO sobrevivir
+        prob_survive = probabilities[1]  # Probabilidad de sobrevivir
+
+        # Calcular nivel de confianza
+        max_prob = max(prob_die, prob_survive)
+        confidence_level = self.get_confidence_level(max_prob)
+
+        return prediction, prob_die, prob_survive, confidence_level
+
+
+# Instancia global del predictor
+predictor = TitanicPredictor()
+
+
+def predict_survival(passenger_data: pd.DataFrame) -> Tuple[int, float, float, str]:
     """
-    Realiza predicciones de supervivencia usando el modelo cargado
-    
-    Args:
-        passenger_data (pd.DataFrame): DataFrame con los datos del pasajero
-    
-    Returns:
-        tuple: (predicción, probabilidad)
+    Función wrapper para mantener compatibilidad
     """
-    # Verificamos que passenger_data sea un DataFrame
-    if not isinstance(passenger_data, pd.DataFrame):
-        raise ValueError("passenger_data debe ser un DataFrame de pandas")
-    
-    # ✅ Agregar la columna que falta
-    passenger_data["Family_Size"] = passenger_data["SibSp"] + passenger_data["Parch"]
-
-    # ✅ Asegurar el orden de columnas esperado por el modelo
-    expected_cols = [
-        "Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked",
-        "Family_Size_Grouped", "Cabin_Assigned", "Name_Size", "TicketNumberCounts",
-        "Family_Size"
-    ]
-    passenger_data = passenger_data[expected_cols]
-
-    # Predicción final (0 o 1)
-    prediction = model.predict(passenger_data)
-    # Convertimos a entero escalar para facilitar su manejo
-    prediction_scalar = int(prediction[0])
-
-     # ---------- Ajuste de probabilidad más avanzado ----------
-    try:
-        age = passenger_data["Age"].values[0]
-        pclass = passenger_data["Pclass"].values[0]
-        sex = passenger_data["Sex"].values[0]  # 0 = female, 1 = male (según encoding habitual)
-        fare = passenger_data["Fare"].values[0]
-        embarked = passenger_data["Embarked"].values[0]  # puede ser codificado
-        family_size = passenger_data["Family_Size"].values[0]
-        name_size = passenger_data["Name_Size"].values[0]
-        ticket_counts = passenger_data["TicketNumberCounts"].values[0]
-        cabin_assigned = passenger_data["Cabin_Assigned"].values[0]  # 0 o 1
-
-        ajuste = 0.0
-
-        # ✔️ Clase social
-        if pclass == 1:
-            ajuste += 0.03
-        elif pclass == 3:
-            ajuste -= 0.02
-
-        # ✔️ Sexo
-        if sex == 0:  # mujer
-            ajuste += 0.04
-        else:
-            ajuste -= 0.02
-
-        # ✔️ Edad
-        if age < 12:
-            ajuste += 0.03
-        elif age > 60:
-            ajuste -= 0.02
-
-        # ✔️ Tarifa
-        if fare > 50:
-            ajuste += 0.02
-        elif fare < 10:
-            ajuste -= 0.01
-
-        # ✔️ Puerto de embarque
-        if embarked == 0:  # Southampton
-            ajuste -= 0.01
-        elif embarked == 2:  # Cherbourg
-            ajuste += 0.01
-
-        # ✔️ Familia
-        if family_size >= 5:
-            ajuste -= 0.03
-        elif family_size == 1:
-            ajuste -= 0.01
-        else:
-            ajuste += 0.01
-
-        # ✔️ Tamaño del nombre (puede indicar nobleza o título)
-        if name_size >= 5:
-            ajuste += 0.01
-
-        # ✔️ Compartir ticket con otros (posible familia/grupo)
-        if ticket_counts > 2:
-            ajuste += 0.02
-
-        # ✔️ Cabina asignada
-        if cabin_assigned == 1:
-            ajuste += 0.02
-
-        # ---------- Probabilidad final con base aleatoria ----------
-        if prediction_scalar == 1:
-            base_prob = random.uniform(0.85, 0.93)
-            probability = round(min(0.99, base_prob + ajuste), 2)
-        else:
-            base_prob = random.uniform(0.02, 0.15)
-            probability = round(max(0.01, base_prob - ajuste), 2)
-
-    except Exception as e:
-        probability = 1.0 if prediction_scalar == 1 else 0.0
-        print(f"Error calculando probabilidad: {e}")
-
-    print(f"Final probability: {probability}")
-    return prediction_scalar, probability
+    return predictor.predict_survival(passenger_data)
