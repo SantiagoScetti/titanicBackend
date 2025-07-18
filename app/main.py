@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-
+import os
+import uvicorn
 from app.schemas import PassengerInput, PredictionOutput
 from app.model import predict_survival
 
@@ -166,3 +167,6 @@ async def get_categories():
         }
     }
     """
+    if __name__ == "__main__":
+        port = int(os.getenv("PORT", 8000))  # Use Render's PORT env var, default to 8000 for local
+        uvicorn.run(app, host="0.0.0.0", port=port)
