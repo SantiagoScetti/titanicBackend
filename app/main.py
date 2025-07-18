@@ -94,9 +94,65 @@ async def predict(passenger: PassengerInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/")
-def root():
-    return {"message": "Titanic prediction API online"}
+@app.get("/", summary="API Root Endpoint")
+async def root():
+    """
+    Punto de entrada principal de la API de predicción de supervivencia del Titanic.
+
+    Proporciona información sobre la API, los endpoints disponibles y cómo usarla.
+    """
+    return {
+        "status": "running",
+        "message": "Bienvenido a la Titanic Survival Prediction API",
+        "version": "2.0",
+        "description": (
+            "Esta API predice la probabilidad de supervivencia de un pasajero del Titanic "
+            "usando un modelo Random Forest entrenado con datos históricos."
+        ),
+        "endpoints": [
+            {
+                "path": "/predict",
+                "method": "POST",
+                "description": "Predice si un pasajero habría sobrevivido. Usa el esquema PassengerInput.",
+                "example_request": {
+                    "name": "Kelly, Mr. James",
+                    "Pclass": 3,
+                    "Age": 34.5,
+                    "Fare": 7.8292,
+                    "Cabin_Assigned": 0,
+                    "Name_Size": 2.0,
+                    "TicketNumberCounts": 1,
+                    "Sex": "male",
+                    "Embarked": "Q",
+                    "Title": "Mr",
+                    "TicketLocation": "SOTON/OQ",
+                    "Family_Size_Grouped": "Alone",
+                    "Age_Cut": "5",
+                    "Fare_cut": "0",
+                    "Name_LengthGB": "(23.0, 25.0]"
+                }
+            },
+            {
+                "path": "/categories",
+                "method": "GET",
+                "description": "Devuelve las categorías válidas para las variables categóricas del modelo."
+            }
+        ],
+        "documentation": "https://titanicbackendss.onrender.com/docs",
+        "usage": (
+            "Envía un POST a /predict con un JSON válido según el esquema PassengerInput. "
+            "Consulta /categories para obtener las categorías válidas. "
+            "La documentación interactiva en /docs proporciona más detalles y ejemplos."
+        ),
+        "feature_importances": {
+            "Title_Mr": 0.150890,
+            "Sex_male": 0.141174,
+            "Sex_female": 0.136364,
+            "Pclass": 0.079872,
+            "Fare": 0.068301,
+            "note": "Otras características tienen menor importancia. Consulta /categories para más detalles."
+        }
+    }
 
 @app.get("/categories", summary="Categorías válidas para las variables categóricas")
 async def get_categories():
