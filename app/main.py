@@ -35,6 +35,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Definir categorías válidas
+EXPECTED_CATEGORIES = {
+    "Sex": ["male", "female"],
+    "Embarked": ["C", "Q", "S"],
+    "Title": ["Mr", "Mrs", "Miss", "Master", "military", "nobility", "unmarried_women", "married_women", "religious"],
+    "TicketLocation": [
+        "A/4", "A/5", "CA", "PC", "SOTON/OQ", "SC/Paris", "W/C", "Blank", "C", "F.C.", "F.C.C.", 
+        "Fa", "P/PP", "PP", "S.C./A.4.", "S.O./P.P.", "S.O.C.", "S.O.P.", "S.P.", "SC", 
+        "SC/AH", "SO/C", "STON/O", "STON/O2.", "SW/PP", "W.E.P.", "WE/P", "A4.", "A/S", "C.A./SOTON"
+    ],
+    "Family_Size_Grouped": ["Alone", "Small", "Medium", "Large"],
+    "Age_Cut": ["0", "1", "2", "3", "4", "5", "6", "7", "8"],
+    "Fare_cut": ["0", "1", "2", "3", "4", "5", "6"],
+    "Name_LengthGB": [
+        "(11.999, 18.0]", "(18.0, 20.0]", "(20.0, 23.0]", "(23.0, 25.0]", 
+        "(25.0, 27.25]", "(27.25, 30.0]", "(30.0, 38.0]", "(38.0, 82.0]"
+    ],
+    "details": {
+        "Age_Cut": {
+            "0": "<=16 years",
+            "1": ">16 to 20.125 years",
+            "2": ">20.125 to 24 years",
+            "3": ">24 to 28 years",
+            "4": ">28 to 32.312 years",
+            "5": ">32.312 to 38 years",
+            "6": ">38 to 47 years",
+            "7": ">47 to 80 years",
+            "8": ">80 years"
+        },
+        "Fare_cut": {
+            "0": "<=7.775 pounds",
+            "1": ">7.775 to 8.662 pounds",
+            "2": ">8.662 to 14.454 pounds",
+            "3": ">14.454 to 26 pounds",
+            "4": ">26 to 52.369 pounds",
+            "5": ">52.369 to 512.329 pounds",
+            "6": ">512.329 pounds"
+        },
+        "Family_Size_Grouped": {
+            "Alone": "1 person",
+            "Small": "2 to 4 people",
+            "Medium": "5 to 6 people",
+            "Large": "7 or more people"
+        },
+        "Name_LengthGB": {
+            "(11.999, 18.0]": "Name length between 12 and 18 characters",
+            "(18.0, 20.0]": "Name length between 18 and 20 characters",
+            "(20.0, 23.0]": "Name length between 20 and 23 characters",
+            "(23.0, 25.0]": "Name length between 23 and 25 characters",
+            "(25.0, 27.25]": "Name length between 25 and 27.25 characters",
+            "(27.25, 30.0]": "Name length between 27.25 and 30 characters",
+            "(30.0, 38.0]": "Name length between 30 and 38 characters",
+            "(38.0, 82.0]": "Name length between 38 and 82 characters"
+        }
+    }
+}
 
 @app.post("/predict", response_model=PredictionOutput)
 async def predict(passenger: PassengerInput):
@@ -171,58 +227,12 @@ async def get_categories():
     - **Age_Cut**: Edad categorizada en rangos numéricos (0 a 8), basados en los cortes definidos en el preprocesamiento.
     - **Fare_cut**: Tarifa categorizada en rangos numéricos (0 a 6), basados en los cortes definidos en el preprocesamiento.
     - **Name_LengthGB**: Longitud del nombre categorizada en rangos (e.g., '(11.999, 18.0]', '(18.0, 20.0]').
-
-    ### Ejemplo de respuesta
-    ```json
-    {
-        "Sex": ["male", "female"],
-        "Embarked": ["C", "Q", "S"],
-        "Title": ["Mr", "Mrs", "Miss", "Master", "military", "nobility", "unmarried_women", "married_women", "religious"],
-        "TicketLocation": ["A/4", "A/5", "CA", "PC", "SOTON/OQ", "SC/Paris", "W/C", "Blank", "C", "F.C.", "F.C.C.", "Fa", "P/PP", "PP", "S.C./A.4.", "S.O./P.P.", "S.O.C.", "S.O.P.", "S.P.", "SC", "SC/AH", "SO/C", "STON/O", "STON/O2.", "SW/PP", "W.E.P.", "WE/P", "A4.", "A/S", "C.A./SOTON"],
-        "Family_Size_Grouped": ["Alone", "Small", "Medium", "Large"],
-        "Age_Cut": ["0", "1", "2", "3", "4", "5", "6", "7", "8"],
-        "Fare_cut": ["0", "1", "2", "3", "4", "5", "6"],
-        "Name_LengthGB": ["(11.999, 18.0]", "(18.0, 20.0]", "(20.0, 23.0]", "(23.0, 25.0]", "(25.0, 27.25]", "(27.25, 30.0]", "(30.0, 38.0]", "(38.0, 82.0]"],
-        "details": {
-            "Age_Cut": {
-                "0": "<=16 years",
-                "1": ">16 to 20.125 years",
-                "2": ">20.125 to 24 years",
-                "3": ">24 to 28 years",
-                "4": ">28 to 32.312 years",
-                "5": ">32.312 to 38 years",
-                "6": ">38 to 47 years",
-                "7": ">47 to 80 years",
-                "8": ">80 years"
-            },
-            "Fare_cut": {
-                "0": "<=7.775 pounds",
-                "1": ">7.775 to 8.662 pounds",
-                "2": ">8.662 to 14.454 pounds",
-                "3": ">14.454 to 26 pounds",
-                "4": ">26 to 52.369 pounds",
-                "5": ">52.369 to 512.329 pounds",
-                "6": ">512.329 pounds"
-            },
-            "Family_Size_Grouped": {
-                "Alone": "1 person",
-                "Small": "2 to 4 people",
-                "Medium": "5 to 6 people",
-                "Large": "7 or more people"
-            },
-            "Name_LengthGB": {
-                "(11.999, 18.0]": "Name length between 12 and 18 characters",
-                "(18.0, 20.0]": "Name length between 18 and 20 characters",
-                "(20.0, 23.0]": "Name length between 20 and 23 characters",
-                "(23.0, 25.0]": "Name length between 23 and 25 characters",
-                "(25.0, 27.25]": "Name length between 25 and 27.25 characters",
-                "(27.25, 30.0]": "Name length between 27.25 and 30 characters",
-                "(30.0, 38.0]": "Name length between 30 and 38 characters",
-                "(38.0, 82.0]": "Name length between 38 and 82 characters"
-            }
-        }
-    }
     """
-    if __name__ == "__main__":
-        port = int(os.getenv("PORT", 8000))  # Use Render's PORT env var, default to 8000 for local
-        uvicorn.run(app, host="0.0.0.0", port=port)
+    try:
+        return EXPECTED_CATEGORIES
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener categorías: {str(e)}")
+    
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
