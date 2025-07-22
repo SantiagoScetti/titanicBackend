@@ -39,7 +39,7 @@ app.add_middleware(
 EXPECTED_CATEGORIES = {
     "Sex": ["male", "female"],
     "Embarked": ["C", "Q", "S"],
-    "Title": ["Mr", "Mrs", "Miss", "Master", "military", "nobility", "unmarried_women", "married_women", "religious"],
+    "Title": ["Dr", "Master", "Mr", "married_women", "military", "nobility", "religious", "unmarried_women"],    
     "TicketLocation": [
         "A/4", "A/5", "CA", "PC", "SOTON/OQ", "SC/Paris", "W/C", "Blank", "C", "F.C.", "F.C.C.", 
         "Fa", "P/PP", "PP", "S.C./A.4.", "S.O./P.P.", "S.O.C.", "S.O.P.", "S.P.", "SC", 
