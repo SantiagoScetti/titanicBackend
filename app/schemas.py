@@ -15,7 +15,7 @@ class PassengerInput(BaseModel):
     Title: str = Field(..., description="Título: 'Mr', 'Mrs', 'Miss', 'Master', 'military', 'nobility', 'unmarried_women', 'married_women', 'religious'")
     TicketLocation: str = Field(..., description="Prefijo del ticket normalizado: 'A/4', 'A/5', 'CA', 'PC', 'SOTON/OQ', 'SC/Paris', 'W/C', 'Blank', etc.")
     Family_Size_Grouped: str = Field(..., description="Tamaño familiar: 'Alone' (1), 'Small' (2-4), 'Medium' (5-6), 'Large' (7+)")
-    Age_Cut: str = Field(..., description="Categoría de edad: '0' (<=16), '1' (16-20.125), '2' (20.125-24), '3' (24-28), '4' (28-32.312), '5' (32.312-38), '6' (38-47), '7' (47-80), '8' (>80)")
+    Age_Cut: str = Field(..., description="Categoría de edad: '0' (<=16), '1' (16-20.125), '2' (20.125-24), '3' (24-28), '4' (28-32.312), '5' (32.312-38), '6' (38-47), '7' (47-80)")
     Fare_cut: str = Field(..., description="Categoría de tarifa: '0' (<=7.775), '1' (7.775-8.662), '2' (8.662-14.454), '3' (14.454-26), '4' (26-52.369), '5' (52.369-512.329), '6' (>512.329)")
     Name_LengthGB: str = Field(..., description="Longitud del nombre: '(11.999, 18.0]', '(18.0, 20.0]', '(20.0, 23.0]', '(23.0, 25.0]', '(25.0, 27.25]', '(27.25, 30.0]', '(30.0, 38.0]', '(38.0, 82.0]'")
 
